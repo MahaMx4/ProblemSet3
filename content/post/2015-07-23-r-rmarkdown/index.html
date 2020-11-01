@@ -1,0 +1,217 @@
+---
+title: "Predicting Popular Vote for The 2020 American Election"
+author: "Maha Mohamed"
+date: 2020-11-01T21:13:14-05:00
+bibliography: "references.bib" 
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+
+
+<div id="model" class="section level1">
+<h1>Model</h1>
+<p>I am interested in predicting the popular vote outcome of the 2020 American federal election by using a logistic regression mixed model with post-stratification technique.</p>
+<div id="model-specifics" class="section level2">
+<h2>Model Specifics</h2>
+<p>This model utilizes frequentist inference as this leads to a more accurate result. The parameters of this model are fixed as its based off survey data, thus justifying it’s use (<span class="citation">Hong H (2013)</span>). This model utilizes survey data that was conducted by the democracy fund voter study group in June 25 to July 1,2020 (<span class="citation">Tausanovitch C (2020)</span>). It provides information regarding American voter’s values and behaviors allowing us to predict who will the popular vote in the 2020 American election.The census data is from the 2018 census conducted by IPUMS providing demographics that help shape the post-stratification technique (<span class="citation">Ruggles S (2020)</span>).</p>
+<p>A logistic regression mixed model allows us to predict the proportion of voters who will vote for Donald Trump. This mixed model consists of fixed effects and random effects. Where, fixed effects refers to variables that will only vary between studies because of sampling error and random effects do not estimate one effect,but rather estimate the mean of a distribution of effects (<span class="citation">Borenstein M (2009)</span>). In this case, the fixed effects are on the individual level as it includes sex and age. These two variables are particularly important as they provide general information about the voters allowing there to be some context to the voters. Dependent on the sex and age found more frequently and whether it’s statistically significant in the context of voting for Trump, will provide valuable information regarding how Americans will vote in the upcoming election. Ages rather than age groups was utilized since age groups may not provide an accurate representation on the whole population. Sexes used the binary representation where females are 0 and males are 1. The random effect is on the group level and is the state where the household is located. This provides geographical context which plays an important role in how an American will vote as certain states are viewed to be more democratic than others (<span class="citation">Hill SJ (2019)</span>). As voting for Trump is a binary outcome this aligns with a logistic regression model further proving this is the right model for this analysis.</p>
+<p>The equation for this logistic regression mixed model provides 2 equations:</p>
+<ol style="list-style-type: decimal">
+<li>Individual level</li>
+</ol>
+<p><span class="math display">\[log(\frac p{1-p})= \beta_{0j} +\beta_1 x_{sexj} +\beta_2 x_{agej}+ r_{ij}\]</span>
+Where, <span class="math display">\[log \frac p{1-p} \]</span> represents the proportion of voters who will vote for Donald Trump. In this equation, j is the states where the households of the participants are located. Similarly, <span class="math inline">\(\beta_0j\)</span> represents the intercept of the model which is dependent on the random effects, in this case state. Moreover, <span class="math inline">\(\beta_1\)</span> represents the coefficient for sex of the pooled data.Therefore, for every one unit increase in sex, transitioning from female to male,we except a <span class="math inline">\(\beta_1\)</span> increase in the probability of voting for Trump. Additionally, <span class="math inline">\(\beta_2\)</span> represents the coefficient for age.So, for every one unit increase in age, we expect a <span class="math inline">\(\beta_2\)</span> increase in the probability of voting for Donald Trump. Lastly, <span class="math inline">\(r_{ij}\)</span> represents the error term for the individual level model.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Group level</li>
+</ol>
+<p><span class="math display">\[ \beta_{0j}= r_{00} + r_{01} W_j +u_{0j} \]</span>
+Where, <span class="math inline">\(\beta_0j\)</span> is the intercept from the individual level equation. Additionally, <span class="math inline">\(r_{00}\)</span> is the intercept of the intercept and fixed effects determines the output of the non random terms in the random intercept model. Furthermore, <span class="math inline">\(r_{01}\)</span> is the intercept of the first state and <span class="math inline">\(W_j\)</span> is the state. Lastly, <span class="math inline">\(u_{0j}\)</span> is the error term for the group level model.
+You can embed an R code chunk like this:</p>
+<pre class="r"><code>
+#Trump model
+
+model_logit&lt;- glmer (as.factor(vote_trump)~sex+ age+(1|statefip),
+                      data=survey_data,
+                      family=binomial)
+## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
+##  - Rescale variables?
+
+#Biden model
+
+model_biden&lt;- glmer (as.factor(vote_biden)~sex+ age+(1|statefip),
+                      data=survey_data,
+                      family=binomial)
+## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
+##  - Rescale variables?</code></pre>
+</div>
+<div id="post-stratification" class="section level2">
+<h2>Post-Stratification</h2>
+<p>Post-stratification is used in survey analysis to demonstrate how an entire population will vote by allowing equal allotment of subgroups of participants for each experimental condition (<span class="citation">Downes M (2020)</span>). This is through adjusting weights so that the weighted totals in cells are equal to the overall population (<span class="citation">Downes M (2020)</span>). This is a useful method that was followed in this analysis as it allows to account for misrepresentation in the data leading to a more accurate representation of the data. It can then be used to influence policies that accurately represent the population they are meant to serve.</p>
+<p>Specifically, the proportion of people voting for Trump will be analyzed, once this is conducted to see the full picture,a similar analysis will be conducted for Biden. However, for simplicity we will be focusing on the proportion of people voting for Trump as the model above outlines. The cells that will be used in this stratification are age, gender, and state. Age is being included because it was seen as one of the greatest predictor in past US elections (<span class="citation">JL (2013)</span>). Gender and have also been seen to predict voting patterns as they can influence how individuals will vote as it can impact how they view policies based on gender differences (<span class="citation">Chiao JY (2008)</span>). Additionally, state was included since specific states tend to have similar voting patterns therefore looking at how states will votes (<span class="citation">Hill SJ (2019)</span>). Furthermore, education was excluded because studies have shown that it does not have a significant impact on voting activity as despite education levels increasing in America, voting levels remained the same (<span class="citation">RE (2011)</span>).</p>
+<p>Here I made cells based off different ages, sex and states. Using the model described in the previous sub-section I will estimate the proportion of voters in each bin. I will then weight each proportion estimate in each bin by the respective population size of that bin and sum those values and divide that by the entire population size. This will lead to the proportion of voters that will vote for Trump and the methodology will be repeated for Biden.</p>
+</div>
+<div id="data-clean-up" class="section level2">
+<h2>Data Clean up</h2>
+<p>In order to use the census and survey data for this analysis, I first had to clean it. The survey data categories were changed to match the census data. Specifically, the mutate function was used to create the vote Trump and vote Biden categories to be able to find the proportion of voters voting for each candidate. Gender was renamed sex and females became 0’s whereas males became 1’s to match the census data. Within the census data, males and females were adapted from 1’s and 2’s to 0’s and 1’s. Also within census data, the state names were changed to the abbreviations found in the survey data. Age was only changed within the census data where ages that were less than 1 and 90 year old were removed this was because these ages were found not to add significant value to this analysis. Altogether, this allowed for the post-stratification analysis to work as the categories were matched.</p>
+<pre class="r"><code>#post-stratification calculation
+
+#trump
+
+census_data$logodds_estimate &lt;-
+  model_logit %&gt;%
+  predict(newdata = census_data)
+
+census_data$estimate &lt;-
+  exp(census_data$logodds_estimate)/(1+exp(census_data$logodds_estimate))
+
+
+#biden
+
+census_data$logodds_estimatebiden &lt;-
+  model_biden %&gt;%
+  predict(newdata = census_data)
+
+census_data$estimatebiden &lt;-
+  exp(census_data$logodds_estimatebiden)/(1+exp(census_data$logodds_estimatebiden))</code></pre>
+</div>
+</div>
+<div id="results" class="section level1">
+<h1>Results</h1>
+<div id="model-results" class="section level2">
+<h2>Model Results</h2>
+<p>The logistic regression mixed model determining the proportion of voters that will vote for Trump showed that age, sex and state were the right variables for the model. As the fixed effects, age and sex, were statistically significant with really small p values. The random effects data shows the variance of the random effects to be 0.03.</p>
+</div>
+<div id="table-1-this-shows-the-results-of-the-logistic-regression-model" class="section level2">
+<h2>Table 1: This shows the results of the logistic regression model</h2>
+<pre class="r"><code>summary(model_logit)
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: as.factor(vote_trump) ~ sex + age + (1 | statefip)
+##    Data: survey_data
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   8348.5   8375.6  -4170.3   8340.5     6471 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.3092 -0.7953 -0.5991  1.1162  2.1629 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  statefip (Intercept) 0.03341  0.1828  
+## Number of obs: 6475, groups:  statefip, 51
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -1.590358   0.088878  -17.89   &lt;2e-16 ***
+## sex          0.546829   0.052758   10.37   &lt;2e-16 ***
+## age          0.018752   0.001587   11.82   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Correlation of Fixed Effects:
+##     (Intr) sex   
+## sex -0.298       
+## age -0.831 -0.007
+## convergence code: 0
+## Model is nearly unidentifiable: very large eigenvalue
+##  - Rescale variables?</code></pre>
+</div>
+<div id="post-stratification-1" class="section level2">
+<h2>Post-Stratification</h2>
+<p>The post-stratification results include the predictions for the proportion of voters who will vote for Trump and those who will vote for Biden.</p>
+</div>
+<div id="table-2-proportion-of-voters-who-will-vote-for-trump" class="section level2">
+<h2>Table 2: Proportion of voters who will vote for Trump</h2>
+<pre class="r"><code>census_data %&gt;% 
+  mutate(apv_prop=estimate*n) %&gt;% 
+  summarise(trumppopularvote=sum(apv_prop)/sum(n))
+## # A tibble: 1 x 1
+##   trumppopularvote
+##              &lt;dbl&gt;
+## 1            0.372</code></pre>
+</div>
+<div id="table-3-proportion-of-voters-who-will-vote-for-biden" class="section level2">
+<h2>Table 3: Proportion of voters who will vote for Biden</h2>
+<pre class="r"><code>census_data %&gt;% 
+  mutate(apv_prop_predict=estimatebiden*n) %&gt;% 
+  summarise(bidenpopularvote=sum(apv_prop_predict)/sum(n))
+## # A tibble: 1 x 1
+##   bidenpopularvote
+##              &lt;dbl&gt;
+## 1            0.421</code></pre>
+</div>
+</div>
+<div id="discussion" class="section level1">
+<h1>Discussion</h1>
+<p>In American elections, the popular vote depicts who majority of Americans voted for. The president of the United States is declared based on the electoral college which works by Americans votes counting towards an elector who represents the candidate’s party. Therefore, the popular vote plays an important role in which electors are picked who then cast the vote. The number of electors from each state is dependent on the population of the state with a minimum of 3 electors per state (<span class="citation">Robertson H (2020)</span>). The electoral college system has been criticized for not accurately representing what Americans want(<span class="citation">Robertson H (2020)</span>). Therefore, I am focusing solely on the predictions for the popular vote as this is solely based on who Americans want to be their president.</p>
+<p>To determine the popular vote in the upcoming election, census and survey data were utilized. The survey data was conducted by the democracy fund voter study group from June 25 to July 1,2020 providing information on American’s values and voting behavior (<span class="citation">Tausanovitch C (2020)</span>. As this is recent, it allows recent data making the model accurate. The census data is from the 2018 census conducted by IPUMS providing the necessary demographic data to help shape the post-stratification technique (<span class="citation">Ruggles S (2020)</span>).</p>
+<p>Through the logistic regression mixed model based off the survey data, I created the model that the post-stratification was based off of. The variables included within this model were age and sex as the fixed effects. The summary of the model in table 1 depicts that these variables are statistically significant further proving that this is the right model to determine the proportion of voters that will vote for Trump in the 2020 election.</p>
+<p>The following equation is for the individual level of this model:</p>
+<p><span class="math display">\[log(\frac p{1-p})= \beta_{0j} +0.54 x_{sexj} +0.02 x_{age}+0.09 \]</span></p>
+<p>The equation for the group level:</p>
+<p><span class="math display">\[ \beta_{0j}= -1.59 + 0.04 W_j +0.18 \]</span></p>
+<p>Specifically , the equation for the individual level demonstrates that as sex transitions from female to male, there will be a 0.54 increase in the probability of voting for Trump. Illustrating that males are more likely to vote for Trump than females. This aligns with studies which show that despite females voting more than males, males tend to vote Republican whereas females are more likely to vote Democratic (<span class="citation">R (2013)</span>). Moreover, this equation demonstrates that for every one unit increase in age, there will be a 0.02 increase in the probability of voting for Donald Trump. While this does show that older individuals are more likely to vote for Trump, this is not a large increase. This can be attributed to older voters being more likely to vote for the Democratic presidential candidate for the first time in 20 years (<span class="citation">Z (2020)</span>). Specifically, the coronavirus pandemic has led many seniors to not vote for Trump as they have felt as if he has not provided them with the right support as they are a vulnerable population (<span class="citation">Z (2020)</span>). The group level equation depicts the random effects model which is the state where the household of the participant is located. The variance allows for broader inference that can impact the fixed effects (<span class="citation">Downes M (2020)</span>). The variance was found to be 0.03 which demonstrates the variability from state to state in terms of the probability to vote for Donald Trump.</p>
+<p>Post stratification is utilized to provide an accurate representation of a population specifically using census data. In this analysis, it was used to determine that Joe Biden will win the popular vote by 47.06%. Whereas, Donald Trump will receive 37.20% of the popular vote in the upcoming 2020 election. This prediction demonstrates a different result from the 2016 presidential election because these last 4 years as Trump led a polarizing agenda. This has led to record high amount of people voting this year (<span class="citation">Mellnik T (2020)</span>). It is important to note that in 2016 despite losing the popular vote, Donald Trump became president. This was because polls did not provide an accurate representation of what Americans believed. Specifically, non response bias has been named as the cause (<span class="citation">Mercer A (2016)</span>). This is when despite having equal opportunity, a group within the population decide not to respond to the poll (<span class="citation">Mercer A (2016)</span>). Particularly this has been associated with people not wanting to admit they support Donald Trump. 4 years later, this may still be the same Overall, the American election has implications on the entire world ad their foreign policies will impact every country.</p>
+<div id="weaknesses" class="section level2">
+<h2>Weaknesses</h2>
+<p>A weakness of this prediction is that humans can change their mind quite quickly. There’s no way to know for certain how a person will vote because they can change their mind whenever they want to. While people’s fundamental values tend to stay the same. There is still know way to certainly know if somebody is honestly sharing how they will vote. This can be because of the stigma surrounding voting a certain way. America within these last 4 years has changed a lot and therefore certain groups may feel as if they will be stigmatized for sharing that they will vote for a specific party. This therefore will not lead to an accurate result of who will win.</p>
+</div>
+<div id="next-steps" class="section level2">
+<h2>Next Steps</h2>
+<p>In this report, the census data was from 2018 which means that the population demographics may have changed in the last two years. This may not provide the necessary information that will influence the up and coming US election. However, this is the latest census information that is available for statistical analysis. Next steps, to lead to census data more representative of what America looks like today could be an online census. The census is trying to gain an accurate representation of the entire country which has a population of over 328 million people. Therefore, this will obviously take a long time to gather data.</p>
+<p>Thus, an online census that is occurring this year is a better way to adapt to this new online generation (<span class="citation">Bureau (2020)</span>). As this online census has not yet been completed depending on what occurs it should be adapted and better moving forward. An online census can reach more individuals that will be more willing to complete it. However, considerations of the population that does not have access to technology must be accounted for. This may include making devices available that can allow them to participate in the survey. Ultimately, this leads to a better census that can lead to more accurate results within post stratification analysis, but also generally when used for policies based on the demographics of the population.</p>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-citeBorenstein">
+<p>Borenstein M, Higgins JPT, Hedges LV. 2009. “Introduction to Meta-Analysis.” <em>John Wiley &amp; Sons Ltd</em>.</p>
+</div>
+<div id="ref-citeUnitedStates">
+<p>Bureau, United States Census. 2020. “2018 Census Test.”</p>
+</div>
+<div id="ref-citeChiao">
+<p>Chiao JY, Gill H, Bowman NE. 2008. “The Political Gender Gap: Gender Bias in Facial Inferences That Predict Voting Behaviour.” <em>Biochem Med</em> 3 (2): 4.</p>
+</div>
+<div id="ref-citeDownes">
+<p>Downes M, Carlin JB. 2020. “Multilevel Regression and Poststratification as a Modeling Approach for Estimating Population Quantities in Large Population Health Studies: A Simulation Study.” <em>Biom J</em> 62 (2): 12.</p>
+</div>
+<div id="ref-citeHill">
+<p>Hill SJ, Huber GA, Hopkins DJ. 2019. “Local Demographic Changes and Us Presidential Voting, 2012 to 2016.” <em>PNAS</em> 116 (50): 5.</p>
+</div>
+<div id="ref-citeHong">
+<p>Hong H, Shmaliyan TA, Carlin BP. 2013. “Comparing Bayesian and Frequentist Approaches for Multiple Outcome Mixed Treatment Comparisons.” <em>Med Decis Making</em> 33 (5): 28.</p>
+</div>
+<div id="ref-citeHolland">
+<p>JL, Holland. 2013. “Age Gap? The Influence of Age on Voting Behaviour and Political Preferences in the American Electorate.” <em>Washington State Univeristy</em> 1 (3): 3.</p>
+</div>
+<div id="ref-citeMellnik">
+<p>Mellnik T, Santamarina D., Berkowitz B. 2020. “20 Million Americans Didn’t Vote in 2016’s Closest Battlegrounds.” <em>The Washington Post</em>.</p>
+</div>
+<div id="ref-citeMercer">
+<p>Mercer A, McGenner K., Deane C. 2016. “Why 2016 Election Polls Missed Their Mark.” <em>Pew Research Center</em>.</p>
+</div>
+<div id="ref-citeIgielnik">
+<p>R, Igielnik. 2013. “Men and Women in the U.s Continue to Differ in Voter Turnout Rate, Party Identification.” <em>Pew Research Center</em>.</p>
+</div>
+<div id="ref-citeSnyder">
+<p>RE, Snyder. 2011. “The Impact of Age, Education, Political Knowledge and Political Context on Voter Turnout.” <em>UNLV</em> 12 (2): 2.</p>
+</div>
+<div id="ref-citeRobertson">
+<p>Robertson H, Hulley-Jones F., Kirk A. 2020. “Electoral College Explained: How Biden Faces an Uphill Battle in the Us Election.” <em>Guardian</em>.</p>
+</div>
+<div id="ref-citeRuggles">
+<p>Ruggles S, Goeken R, Flood S. 2020. “IPUMS Usa: Version 10.0.” <a href="https://doi.org/https://doi.org/10.18128/D010.V10.0">https://doi.org/https://doi.org/10.18128/D010.V10.0</a>.</p>
+</div>
+<div id="ref-citeTausanovitch">
+<p>Tausanovitch C, Vavreck L. 2020. “Voter Study Group.” <em>UCLA Democracy Fund</em>.</p>
+</div>
+<div id="ref-citeStanton">
+<p>Z, Stanton. 2020. “Why Senior Citizens Are Flipping on Trump.” <em>Politico</em>.</p>
+</div>
+</div>
+</div>
