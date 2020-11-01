@@ -25,7 +25,7 @@ census_data <- read_csv("C:/Users/mm84/OneDrive/Documents/School/Sta304/Problem 
  
    I am interested in predicting the popular vote outcome of the 2020 American federal election by using a logistic regression mixed model with post-stratification technique. 
 
-## Model Specifics
+## Model Specifics 
 
  This model utilizes frequentist inference as this leads to a more accurate result. The parameters of this model are fixed as its based  off survey data, thus justifying it's use (@citeHong). This model utilizes survey data that was  conducted by the democracy fund voter study group in June 25 to July 1,2020 (@citeTausanovitch). It provides information regarding American voter's values and behaviors allowing us to predict who will the popular vote in the 2020 American election.The census data is from the 2018 census conducted by IPUMS providing demographics that help shape the post-stratification technique (@citeRuggles).
   
