@@ -32,7 +32,7 @@ census_data <- read_csv("C:/Users/mm84/OneDrive/Documents/School/Sta304/Problem 
    A logistic regression mixed model  allows us to predict the proportion of voters who will vote for Donald Trump. This mixed model consists of fixed effects and random effects. Where, fixed effects refers to variables that will only vary between studies because of sampling error and random effects do not estimate one effect,but rather estimate the mean of a distribution of effects (@citeBorenstein). In this case, the fixed effects are on the individual level as it includes sex and age. These two variables are particularly important as they provide general information about the voters allowing there to be some context to the voters. Dependent on the sex and age found more frequently and whether it's statistically significant in the context of voting for Trump, will provide valuable information regarding how Americans will vote in the upcoming election. Ages rather than age groups was utilized since age groups may not provide an accurate representation on the whole population. Sexes used the binary representation where females are 0 and males are 1. The random effect is on the group level and is the state where the household is located. This provides geographical context which plays an important role in how an American will vote as certain states are viewed to be more democratic than others (@citeHill). As voting for Trump is a binary outcome this aligns with a logistic regression model further proving this is the right model for this analysis. 
   
 The equation for this logistic regression mixed model provides 2 equations:
-
+ 
 1) Individual level
 
 $$log(\frac p{1-p})= \beta_{0j} +\beta_1 x_{sexj} +\beta_2 x_{agej}+ r_{ij}$$
